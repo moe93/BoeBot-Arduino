@@ -1,24 +1,31 @@
 /* A recreation of Boe-Bot, an autonomous obstacle avoiding robot
+
    IR receiver: looking at the IR receiver from left to right, data, gnd, vin.
+   Using delay(ms) after a continousServo.write() tells the servo the time
+   duration for write() to run.
    Created: 31/12/2015
-   Modified: 5/1/2016
+   Modified: 7/1/2016
 
    SCHEMATIC:
    Left servo motor attaches to PIN 3
    Right servo motor attaches to PIN 2
    Left whisker to PIN 13
    Right whisker to PIN 8
+   Any ground wire to chassis.
 
-   ***FIRST FUNCTIONAL VERSION (to some degree)***
-    Ver 0.4 clears and simplifies code into various functions.
-          - Known issues: whiskers unresponsive at times.
+   ***FULLY FUNCTIONAL VERSION***
+    Ver 0.5 - solves issue with whiskers. Apparently chassis of vehicle is not
+              ground therefore ground wire was connected to the chassis to
+              discharge any current going through the whiskers.
+            - further simplifies code
+
 */
 // ------------- Libraries and Global Variables ---------------
 
 #include <Servo.h>
 
 #define REVERSE_DURATION 1000
-#define ROTATION_DURATION 500
+#define ROTATION_DURATION 681.818 // value is around 45º for MY mechanical setup
 const int LEFT_FORWARD = 120;
 const int RIGHT_FORWARD = 60;
 const int LEFT_BACKWARD = 60;
@@ -42,46 +49,37 @@ void setup() {
 
 }
 
-
-// ------------------------- Main program ------------------------
+// ------------------- Main program -------------------
 void loop() {
 
-  // --------------- Initiate variables ----------------
+  // --------------- Initiate variables ---------------
   leftWhisker = digitalRead(13);
   rightWhisker = digitalRead(8);
 
-  // ------------------ Drive Forward ------------------
+  // ------------------ Drive Forward -----------------
   if ((leftWhisker != 0) && (rightWhisker != 0)) {
-
     forward();
-
   }
 
-  // ------------------- rotate right --------------------
+  // ------------------ Rotate right ------------------
   else if (leftWhisker == 0) {
-
     turnRight();
-
   }
 
-  // --------------------- Rotate left ------------------
+  // ------------------ Rotate left -------------------
   else if (rightWhisker == 0) {
-
     turnLeft();
-
   }
 
   // --------------- Rotate left/right ----------------
   else if ((leftWhisker == 0) && (rightWhisker == 0)) {
-
     leftRight();
-
   }
 
 }
 
 
-// -----------------------FUNCTIONS ---------------------
+// ----------------------- FUNCTIONS --------------------
 // --------------------- Drive forward ------------------
 void forward() {
 
@@ -91,15 +89,13 @@ void forward() {
 
 }
 
-// ---------------------- Rotate right --------------------
+// ---------------------- Rotate right ------------------
 void turnRight() {
 
   // Reverse
-  previousTime = millis();
-  while (millis() - previousTime < REVERSE_DURATION) {
-    leftServo.write(LEFT_BACKWARD);
-    rightServo.write(RIGHT_BACKWARD);
-  }
+  leftServo.write(LEFT_BACKWARD);
+  rightServo.write(RIGHT_BACKWARD);
+  delay(REVERSE_DURATION);
 
   // detach servos to completely stop and delay for stability, then reattach
   leftServo.detach();
@@ -109,11 +105,9 @@ void turnRight() {
   rightServo.attach(2);
 
   // Rotate right
-  previousTime = millis();
-  while (millis() - previousTime < ROTATION_DURATION) {
-    leftServo.write(LEFT_FORWARD);
-    rightServo.write(RIGHT_BACKWARD);
-  }
+  leftServo.write(LEFT_FORWARD);
+  rightServo.write(RIGHT_BACKWARD);
+  delay(ROTATION_DURATION);
 
   // detach servos to completely stop and delay for stability, then reattach
   leftServo.detach();
@@ -127,11 +121,9 @@ void turnRight() {
 void turnLeft() {
 
   // Reverse
-  previousTime = millis();
-  while (millis() - previousTime < REVERSE_DURATION) {
-    leftServo.write(LEFT_BACKWARD);
-    rightServo.write(RIGHT_BACKWARD);
-  }
+  leftServo.write(LEFT_BACKWARD);
+  rightServo.write(RIGHT_BACKWARD);
+  delay(REVERSE_DURATION);
 
   // detach servos to completely stop and delay for stability, then reattach
   leftServo.detach();
@@ -141,11 +133,9 @@ void turnLeft() {
   rightServo.attach(2);
 
   // Rotate left
-  previousTime = millis();
-  while (millis() - previousTime < ROTATION_DURATION) {
-    leftServo.write(LEFT_BACKWARD);
-    rightServo.write(RIGHT_FORWARD);
-  }
+  leftServo.write(LEFT_BACKWARD);
+  rightServo.write(RIGHT_FORWARD);
+  delay(ROTATION_DURATION);
 
   // detach servos to completely stop and delay for stability, then reattach
   leftServo.detach();
@@ -159,11 +149,9 @@ void turnLeft() {
 void leftRight() {
 
   // Reverse
-  previousTime = millis();
-  while (millis() - previousTime < REVERSE_DURATION + 1000) {
-    leftServo.write(LEFT_BACKWARD);
-    rightServo.write(RIGHT_BACKWARD);
-  }
+  leftServo.write(LEFT_BACKWARD);
+  rightServo.write(RIGHT_BACKWARD);
+  delay(REVERSE_DURATION);
 
   // detach servos to completely stop and delay for stability, then reattach
   leftServo.detach();
@@ -173,10 +161,9 @@ void leftRight() {
   rightServo.attach(2);
 
   // Rotate
-  while (millis() - previousTime < ROTATION_DURATION + 250) {
-    leftServo.write(LEFT_BACKWARD);
-    rightServo.write(RIGHT_FORWARD);
-  }
+  leftServo.write(LEFT_BACKWARD);
+  rightServo.write(RIGHT_FORWARD);
+  delay(ROTATION_DURATION);
 
   // detach servos to completely stop and delay for stability, then reattach
   leftServo.detach();
