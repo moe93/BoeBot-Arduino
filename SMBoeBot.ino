@@ -11,7 +11,7 @@
    * Added a servo motor that acts as the "neck/head" for the robot.
    
    Known issues:-
-   * Problems with determining whether to turn left or right.
+   * Turn radius is WAY too big
 */
 
 // ------------- Libraries and Global Variables ---------------
@@ -25,6 +25,7 @@
 #define TRIGGER_PIN 12
 #define ECHO_PIN 13
 #define THRESHOLD 10
+#define TREST 500
 
 // driving constants
 const int LFORWARD = 2000;
@@ -32,6 +33,7 @@ const int RBACKWARD = 2000;
 const int RFORWARD = 1000;
 const int LBACKWARD = 1000;
 const int NEUTRAL = 1500;
+unsigned long tnow;
 
 // peripherals
 Servo leftServo;
@@ -59,9 +61,9 @@ void loop() {
   EXEC(autonomous);
 }
 
+// Move forward
 State S1(){
 int distance = sonar.ping_cm();
-  //Serial.println(distance);
   leftServo.writeMicroseconds(LFORWARD);
   rightServo.writeMicroseconds(RFORWARD);
   if ((distance <= THRESHOLD) && (distance != 0)) {
@@ -69,21 +71,29 @@ int distance = sonar.ping_cm();
   }
 }
 
+// Obstacle detected
 State S2() {
+  // Stop
   leftServo.writeMicroseconds(NEUTRAL);
   rightServo.writeMicroseconds(NEUTRAL);
+  
+  // Scan surrounding
   sweep.write(0);
   int leftDistance = sonar.ping_cm();
-  delay(500);
+  delay(750);
   sweep.write(180);
   int rightDistance = sonar.ping_cm();
-  delay(500);
+  delay(750);
   sweep.write(90);
-  delay(250);
+  delay(500);
   compare(leftDistance, rightDistance);
+
+  // Return to state 1
   autonomous.Set(S1);
 }
 
+
+// ------------ Auxilliary functions ------------
 void compare(int l, int r) {
   if (l < r) {
     turnLeft();
@@ -98,28 +108,33 @@ void compare(int l, int r) {
 
 void turnLeft() {
   
-  // Reverse
-  leftServo.writeMicroseconds(LBACKWARD);
-  rightServo.writeMicroseconds(RBACKWARD);
-  delay(REVERSE_DURATION);
-  // Stop
-  leftServo.writeMicroseconds(NEUTRAL);
-  rightServo.writeMicroseconds(NEUTRAL);
-  delay(REVERSE_DURATION);
+  tnow = millis ();
+  while(millis() - tnow <= REVERSE_DURATION){
+    // Reverse
+    leftServo.writeMicroseconds(LBACKWARD);
+    rightServo.writeMicroseconds(RBACKWARD);
+    delay(TREST);
+    // Stop
+    leftServo.writeMicroseconds(NEUTRAL);
+    rightServo.writeMicroseconds(NEUTRAL);
+    delay(TREST);
 
-  // Rotate left
-  leftServo.writeMicroseconds(LBACKWARD);
-  rightServo.writeMicroseconds(RFORWARD);
-  delay(ROTATION_DURATION);
-  // Stop
-  leftServo.writeMicroseconds(NEUTRAL);
-  rightServo.writeMicroseconds(NEUTRAL);
-  delay(REVERSE_DURATION);
+    // Rotate left
+    leftServo.writeMicroseconds(LBACKWARD);
+    rightServo.writeMicroseconds(RFORWARD);
+    delay(TREST);
+    // Stop
+    leftServo.writeMicroseconds(NEUTRAL);
+    rightServo.writeMicroseconds(NEUTRAL);
+    delay(TREST);
+  }
   
 }
 
 void turnRight() {
-
+  
+  tnow = millis ();
+  while(millis() - tnow <= REVERSE_DURATION) {
   // Reverse
   leftServo.writeMicroseconds(LBACKWARD);
   rightServo.writeMicroseconds(RBACKWARD);
@@ -137,6 +152,6 @@ void turnRight() {
   leftServo.writeMicroseconds(NEUTRAL);
   rightServo.writeMicroseconds(NEUTRAL);
   delay(REVERSE_DURATION);
-  
+  }
 }
 
